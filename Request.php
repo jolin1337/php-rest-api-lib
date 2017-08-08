@@ -114,6 +114,10 @@ class Request {
 		return $requestParams ? (object) $requestParams : False;
 	}
 
+	public function getPayloadParams ($payloadRequest=null, $inputParams=[], bool $validate=True) {
+		return $this->getPutParams($payloadRequest, $inputParams, $validate);
+	}
+
 	public function getPostParams ($postRequest=null, $inputParams=[], bool $validate=True) {
 		return $this->getParams($postRequest, array_merge($inputParams, $_POST), $validate);
 	}

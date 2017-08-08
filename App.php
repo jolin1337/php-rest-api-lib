@@ -174,7 +174,7 @@ class App {
 						$hasTrailingSlash = strpos($reqPath, '/');
 						$reqPath = substr($request->getPathName(), strlen($path) + ($hasTrailingSlash ? 1 : 0));
 						$includePath = $function . (!$hasTrailingSlash ? '/' . $reqPath : '');
-						$includePath = preg_replace('/[^\.a-zA-Z0-9\-\_\/]/', '', $includePath);
+						$includePath = preg_replace('/[^\.a-zA-Z0-9\-\_\/\\\\:]/', '', $includePath);
 						if (substr($includePath, -strlen('.php')) === '.php' && is_file($includePath)) {
 							$response->withContentType('text/html');
 							include($includePath);
@@ -187,13 +187,18 @@ class App {
 						} else if (substr($includePath, -strlen('.js')) === '.js' && is_file($includePath)) {
 							$response->withContentType('text/javascript');
 							include($includePath);
+						} else if (substr($includePath, -strlen('.png')) === '.png' && is_file($includePath)) {
+							$response->withContentType('image/png');
+							include($includePath);
 						} else if (is_file($includePath . '/index.php')) {
 							$response->withContentType('text/html');
 							include($includePath . '/index.php');
 						} else if (is_file($includePath . '/index.html')) {
 							$response->withContentType('text/html');
 							include($includePath . '/index.html');
-						} else echo "--=( " . $includePath;
+						} else if (is_file($includePath)) {
+							readfile($includePath);
+						}// else echo "--=( " . $includePath;
 					});
 				}
 			}

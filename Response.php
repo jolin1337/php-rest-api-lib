@@ -31,7 +31,6 @@ class Response {
 		return $this->setHeader('Location', $url);
 	}
 
-	
 	public function write ($data) {
 		if ($this->ended !== True) {
 			if (is_array($data) || $data instanceof stdClass)

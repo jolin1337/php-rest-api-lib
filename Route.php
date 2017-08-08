@@ -86,9 +86,9 @@ class Route {
 		if ($this->matchRequest($req)) {
 			$callback = $this->function;
 			if (is_callable($callback))
-				$callback($req, $resp);
+				return !$callback($req, $resp);
 			else if (method_exists($callback, 'processRequest')) {
-				$callback->processedRequest($req, $resp);
+				return $callback->processedRequest($req, $resp);
 			}
 		}
 		return $this;
