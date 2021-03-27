@@ -20,17 +20,17 @@ unset($_GET['_']);
 
 // Declare endpoints:
 $app->get('/api/v1/ping', function (Request $request, Response $response) {
-		$response->end('pong');
-	})
+    $response->end('pong');
+  })
   ->get('/api/v1/short-url', function (Request $request, Response $response) {
-		$response->redirectTo($request->getUrl() . '/api');
-	})
-	->get('/api/v1/api', function (Request $request, Response $response) {
-		include('docs/index.php'); // will serve the documentation with it's own logic
-	})
-	->get('/app/content', function (Request $request, Response $response) {
-		$response->end(file_get_contents('content/index.html'));
-	})
+    $response->redirectTo($request->getUrl() . '/api');
+  })
+  ->get('/api/v1/api', function (Request $request, Response $response) {
+    include('docs/index.php'); // will serve the documentation with it's own logic
+  })
+  ->get('/app/content', function (Request $request, Response $response) {
+    $response->end(file_get_contents('content/index.html'));
+  })
   ->use('/app', '../static/pages') // Serve normal files as a file server
   ->post('api/v1/update, authenticate, function (Request $request, Response $response) {
     $params = $request->getPostParams([
