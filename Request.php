@@ -3,7 +3,7 @@
 namespace gd\rest;
 
 /**
-* 
+*
 */
 class Request {
 	private $app = null;
@@ -73,7 +73,7 @@ class Request {
 		$protocol = substr( $sp, 0, strpos( $sp, '/' ) ) . ( ( $ssl ) ? 's' : '' );
 		return $protocol;
 	}
-	
+
 
 	public function getOrigin ($useForwardedHost = false) {
 	    $host     = $this->getHostName($useForwardedHost);
@@ -155,7 +155,7 @@ class Request {
 	}
 
 	public static function method ($serverOptions) {
-		$method = isset($serverOptions['HTTP_ACCESS_CONTROL_REQUEST_METHOD']) ? 
+		$method = isset($serverOptions['HTTP_ACCESS_CONTROL_REQUEST_METHOD']) ?
 								$serverOptions['HTTP_ACCESS_CONTROL_REQUEST_METHOD'] : $serverOptions['REQUEST_METHOD'];
 		return strtolower($method);
 	}
@@ -169,13 +169,12 @@ class Request {
 			$t_vals = $validateAgainst;
 		if(!isset($t_vals) || !is_array($t_vals))
 			return False;
-
 		$res = array();
 		$defaultOptions = array('optional' => False, 'default' => $defaultdefault, 'match' => False, 'values' => False);
 		foreach ($parameters as $param => $options) {
 			if(!is_array($options)) {
 				$param = $options;
-				$options = array('optional' => $defaultOptions['optional'], 'default' => $options, 'match' => $defaultOptions['match']);;
+				$options = array('optional' => $defaultOptions['optional'], 'default' => $options, 'match' => $defaultOptions['match']);
 			}
 			if(!isset($options['optional'])) $options['optional'] = $defaultOptions['optional'];
 			if(!isset($options['default'])) $options['default'] = $defaultdefault;
@@ -186,14 +185,15 @@ class Request {
 				$res[$param] = $options['default'];
 				continue;
 			}
-			else if (!isset($t_vals[$param]) && $options['optional'] === False)
+			else if (!isset($t_vals[$param]) && $options['optional'] === False) {
+				// var_dump($param, /*$t_vals[$param], */$options, $t_vals);
 				return False;
+			}
 
 			if((!is_array($options['values']) || in_array($t_vals[$param], $options['values'])) && (!is_string($options['match']) || preg_match($options['match'], $t_vals[$param]))) {
 				$res[$param] = $t_vals[$param];
 				continue;
 			}
-			
 			return False;
 		}
 		return $res;

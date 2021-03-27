@@ -10,6 +10,7 @@ require_once 'Route.php';
 if (!class_exists('\gd\rest\App')):
 
 class App {
+	private $hook = null;
 	private $basePath = '';
 	private $requestPathName = null;
 	private $router = [
@@ -22,6 +23,13 @@ class App {
 	private $errorRoutes = [];
 	private $subApps = [];
 
+	public function setHook ($hook) {
+		$this->hook = $hook;
+		return $this;
+	}
+	public function getHook () {
+		return $this->hook;
+	}
 	public function setBasePath ($path) {
 		$this->basePath = $path;
 		return $this;
@@ -43,35 +51,35 @@ class App {
 	public function any (String $path, ...$args) {
 		$httpRequests = array_keys($this->router);
 		foreach ($args as $arg) {
-			$this->map($path, $httpRequests, $arg); 
+			$this->map($path, $httpRequests, $arg);
 		}
 		return $this;
 	}
 
 	public function get (String $path, ...$args) {
 		foreach ($args as $arg) {
-			$this->map($path, ['get'], $arg); 
+			$this->map($path, ['get'], $arg);
 		}
 		return $this;
 	}
 
 	public function post (String $path, ...$args) {
 		foreach ($args as $arg) {
-			$this->map($path, ['post'], $arg); 
+			$this->map($path, ['post'], $arg);
 		}
 		return $this;
 	}
 
 	public function put (String $path, ...$args) {
 		foreach ($args as $arg) {
-			$this->map($path, ['put'], $arg); 
+			$this->map($path, ['put'], $arg);
 		}
 		return $this;
 	}
 
 	public function delete (String $path, ...$args) {
 		foreach ($args as $arg) {
-			$this->map($path, ['delete'], $arg); 
+			$this->map($path, ['delete'], $arg);
 		}
 		return $this;
 	}
@@ -91,14 +99,21 @@ class App {
 			// 	if (isset($this->router[$method]))
 			// 		$this->router[$method] = array_merge(array_values($this->router[$method]), array_values($routes));
 			// }
-			if (!is_string($arg))
+			if (!is_string($arg)) {
+				if (!method_exists($arg, 'getBasePath')) {
+					$tmp = new App();
+					$tmp->setHook($arg);
+					$arg = $tmp;
+				}
 				$arg->setBasePath($path . '/' . $arg->getBasePath());
+			}
 			$this->any($path, $arg);
 		}
 		return $this;
 	}
 
-	public function matchRequest($request) {
+	public function matchRequest($request, $response) {
+		if ($response->hasEnded() || (is_callable($this->getHook()) && !$this->getHook()($request, $response))) return False;
 		$method = $request->getMethod();
 		$options = (array)$request->getOptions();
 		$basePath = Route::removeDoubleSlashes($this->basePath ? $this->basePath : '/');
@@ -107,7 +122,7 @@ class App {
 		$options['SERVER']['PHP_SELF'] = substr($options['SERVER']['PHP_SELF'], strlen($basePath)-1);
 		foreach ($this->router[$method] as $route) {
 			$request = new Request($this, $route, $options);
-			if ($route->matchRequest($request)) {
+			if ($route->matchRequest($request, $response)) {
 				return True;
 			}
 		}
@@ -116,6 +131,7 @@ class App {
 
 	public function processRequest ($req=null, $res=null) {
 		$isSubRoute = $req instanceof Request;
+		if (($isSubRoute && $res->hasEnded()) || (is_callable($this->getHook()) && !$this->getHook()($req, $res))) return False;
 		$extraParams = null;
 		$options = $isSubRoute ? (array) $req->getOptions() : [
 			'SERVER' => $_SERVER,
@@ -137,10 +153,10 @@ class App {
 		if (isset($this->router[$method])) {
 			foreach ($this->router[$method] as $route) {
 				$request = new Request($this, $route, $options, $extraParams);
-				if ($route->matchRequest($request)) {
+				if ($route->matchRequest($request, $response)) {
 					$result = $route->processRequest($request, $response);
 					$foundOne = True;
-					if (!$result) {
+					if (!$result || ($isSubRoute && $res->hasEnded())) {
 						break;
 					}
 				}
@@ -175,6 +191,7 @@ class App {
 						$reqPath = substr($request->getPathName(), strlen($path) + ($hasTrailingSlash ? 1 : 0));
 						$includePath = $function . (!$hasTrailingSlash ? '/' . $reqPath : '');
 						$includePath = preg_replace('/[^\.a-zA-Z0-9\-\_\/\\\\:]/', '', $includePath);
+						$file_found = true;
 						if (substr($includePath, -strlen('.php')) === '.php' && is_file($includePath)) {
 							$response->withContentType('text/html');
 							include($includePath);
@@ -198,7 +215,12 @@ class App {
 							include($includePath . '/index.html');
 						} else if (is_file($includePath)) {
 							readfile($includePath);
+						} else {
+							$file_found = false;
 						}// else echo "--=( " . $includePath;
+						if ($file_found) {
+							$response->end();
+						}
 					});
 				}
 			}

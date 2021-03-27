@@ -13,6 +13,9 @@ class Response {
 	public function getApp () {
 		return $this->app;
 	}
+	public function hasEnded () {
+		return $this->ended;
+	}
 
 	public function withStatus ($code) {
 		http_response_code((int) $code);
